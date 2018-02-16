@@ -11,7 +11,17 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all
+     #Check to see if clicked params were title or release date, change css and ordering respectively
+     if params[:key] == 'title'
+       @title_css = 'hilite'
+       @movies = Movie.order(title: :asc)
+     elsif params[:key] == 'release_date'
+       @release_css = 'hilite'		
+       @movies = Movie.order(release_date: :asc)
+     #If neither title or release date were clicked, we don't care.
+     else
+       @movies = Movie.all	
+     end
   end
 
   def new
