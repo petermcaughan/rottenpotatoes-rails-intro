@@ -12,24 +12,49 @@ class MoviesController < ApplicationController
 
   def index
     #Initialize this so index.html.haml can create button for each rating
+    puts "here"
     @all_ratings = ['G','PG','PG-13','R']
 
      #Check to see if clicked params were title or release date, change css and ordering of Movie respectively
-     if params[:key] == 'title'
-       @title_css = 'hilite'
-       @movies = Movie.order(title: :asc)
-     elsif params[:key] == 'release_date'
-       @release_css = 'hilite'		
-       @movies = Movie.order(release_date: :asc)
-     else
-       #If we got here the user may or may not have clicked refresh with some boxes checked. First, check to see if they wanted to filter based on rating
-       if (params[:ratings].nil?)
-         @movies = Movie.all
+      #If user selected a particular mode of sorting, override this to be the new remembered session setting
+       if params[:key] == 'title'
+         session[:title] = true
+         session[:release_date] = false
+         session[:ratings] = false
+         @title_css = 'hilite'
+         @movies = Movie.order(title: :asc)
+       elsif params[:key] == 'release_date'
+         session[:title] = false
+         session[:release_date] = true
+         session[:ratings] = false
+         @release_css = 'hilite'		
+         @movies = Movie.order(release_date: :asc)
        else
+       #If we got here the user may or may not have clicked refresh with some boxes checked. First, check to see if they wanted to filter based on rating
+         if (params[:ratings].nil?)
+          #If we got here, no user input since last settings configuration. we need to check for any remembered settings.
+           if session[:title] == true
+            @title_css = 'hilite'
+            @movies=Movie.order(title: :asc)
+           elsif session[:release_date] == true
+            @release_css = 'hilite'
+            @movies=Movie.order(release_date: :asc)
+           elsif session[:ratings] == true
+            @ratings_filter = session[:ratings_keys]
+            @movies = Movie.where(rating: @ratings_filter)
+           else
+            @movies = Movie.all
+          end
+         else
        #Grab the keys [NOT VALUES] from params[:ratings] to find desired ratings, and display movies
        #where the rating is found in the keys
-       @rating_filter = params[:ratings].keys
-       @movies = Movie.where(rating: @rating_filter)
+          #Update the session settings to remember which ratings you sort by
+         @rating_filter = params[:ratings].keys
+         session[:ratings_keys] = params[:ratings].keys
+         session[:ratings] = true
+         session[:title] = false
+         session[:release_date] = false
+         @movies = Movie.where(rating: @rating_filter)
        end
      end
   end
